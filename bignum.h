@@ -1,6 +1,5 @@
-
-#include <stdio.h>
 #include <string>
+
 template <int S>
 class bignum
 {
@@ -25,10 +24,8 @@ public:
 		}
 	}
 
-
 	bignum(int j)
 	{
-
 		num[0]=j;
 		if (S>1) num[1]=j>>16;
 		for (int i=2; i<S; ++i)
@@ -48,7 +45,7 @@ public:
 		return ret;
 	}
 
-
+	/* Arithmetic operators */
 	bignum operator + (const bignum &rhs) const 
 	{
 		bignum ret;
@@ -104,6 +101,12 @@ public:
 
 		int p=1;
 
+		while (!(div.num[S-1]) && (div < *this))
+		{
+			div <<=16;
+			p+=16;
+			if (p==S*16+1) throw -1;
+		}
 		while (!(div.num[S-1]&0x8000) && (div < *this))
 		{
 			div <<=1;
@@ -120,7 +123,6 @@ public:
 			ret.num[0]|=1;
 		}
 	
-
 		while (--p>=0)
 		{
 			ret <<=1;
@@ -133,7 +135,6 @@ public:
 		}
 
 		return ret; 
-		//TODO
 	}
 
 	bignum operator % (const bignum &rhs) const 
@@ -142,6 +143,12 @@ public:
 
 		int p=1;
 
+		while (!(div.num[S-1]) && (div < *this))
+		{
+			div <<=16;
+			p+=16;
+			if (p==S*16+1) throw -1;
+		}
 		while (!(div.num[S-1]&0x8000) && (div < *this))
 		{
 			div <<=1;
@@ -158,7 +165,6 @@ public:
 			ret.num[0]|=1;
 		}
 	
-
 		while (--p>=0)
 		{
 			ret <<=1;
@@ -171,7 +177,6 @@ public:
 		}
 
 		return cur; 
-		//TODO
 	}
 
 	bignum operator << (int rhs) const
@@ -243,6 +248,7 @@ public:
 		return ret; 
 	}
 
+	/* Comparison operators */
 	bool operator < (const bignum &rhs) const
 	{
 		for (int i=S-1; i>=0; i--)
@@ -256,7 +262,7 @@ public:
 		return true;
 	}
 
-	bool  operator > (const bignum &rhs) const
+	bool operator > (const bignum &rhs) const
 	{
 		for (int i=S-1; i>=0; i--)
 		{
@@ -269,7 +275,7 @@ public:
 		return true;
 	}
 
-	bool  operator <= (const bignum &rhs) const
+	bool operator <= (const bignum &rhs) const
 	{
 		for (int i=S-1; i>=0; i--)
 		{
@@ -314,6 +320,7 @@ public:
 		return false;
 	}
 
+	/* Other functions */
 	std::string toString()
 	{
 		bignum ten;
@@ -327,28 +334,19 @@ public:
 		int ex=0;
 		int z=0;
 
-		//printf ("ToString() called\n");
 		do
 		{
 			bignum test = cur / pl;
-			//printf ("%d-", test.num[0]);
 			if (test<ten) break;
 			pl = pl * ten;
 			++ex;
-			//printf ("%d\n", ex);
 		}while (1);
 
 		while (ex-->=0)
 		{
 			div=cur/pl;
-			/*if (div.num[0]==0 && !z)
-			{
-				pl=pl/ten;
-				continue;
-			}*/
 
 			z=1;
-			//printf ("Appending: %d\n", div.num[0]);
 			ret+=('0'+div.num[0]);
 			cur-=div*pl;
 			pl=pl/ten;
@@ -359,49 +357,90 @@ public:
 		return ret;
 	}
 
+	std::string toStringSigned()
+	{
+		bignum ten;
+		ten.num[0]=10;
+		bignum pl;
+		pl.num[0]=1;
+		std::string ret;
+		bignum cur=*this;
+		bignum div;
+
+		int ex=0;
+		int z=0;
+
+		if (cur.num[S-1]&0x8000) {
+			ret +='-';
+			cur=~cur;
+		}
+
+		do
+		{
+			bignum test = cur / pl;
+			if (test<ten) break;
+			pl = pl * ten;
+			++ex;
+		}while (1);
+
+		while (ex-->=0)
+		{
+			div=cur/pl;
+
+			z=1;
+			ret+=('0'+div.num[0]);
+			cur-=div*pl;
+			pl=pl/ten;
+		}
+
+		if (ret.size()==0) ret+='0';
+
+		return ret;
+	}
+
+	bignum operator ~()
+	{
+		bignum ret;
+		for (int i=0; i<S; ++i)
+		{
+			ret.num[i]=~num[i];
+		}
+		return ret;
+	}
+
+	/* Arithmetic/assignment operators */
 	bignum &operator += (const bignum &rhs) 
 	{
-		*this = *this + rhs;
-
-		return *this;
+		return *this = *this + rhs;
 	}
 
 	bignum &operator -= (const bignum &rhs) 
 	{
-		*this = *this - rhs;
-
-		return *this;
+		return *this = *this - rhs;
 	}
 
 	bignum &operator *= (const bignum &rhs) 
 	{
-		*this = *this * rhs;
-
-		return *this;
+		return *this = *this * rhs;
 	}
 
 	bignum &operator /= (const bignum &rhs) 
 	{
-		*this = *this / rhs;
+		return *this = *this / rhs;
+	}
 
-		return *this;
+	bignum &operator %= (const bignum &rhs) 
+	{
+		return *this = *this % rhs;
 	}
 
 	bignum &operator <<= (int rhs) 
 	{
-		*this = *this << rhs;
-
-		return *this;
+		return *this = *this << rhs;
 	}
 	bignum &operator >>= (int rhs) 
 	{
-		*this = *this >> rhs;
-
-		return *this;
+		return *this = *this >> rhs;
 	}
-
-
-
-
 };
 
