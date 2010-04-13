@@ -36,20 +36,9 @@ public:
 
    	bignum(char *str)
 	{
-		for (int i=0; i<S; ++i)
-		{
-			num[i]=0;
-		}
-        bignum ten(10);
-        for (int i=0; str[i]; ++i)
-        {
-            if (str[i]<'0' || str[i]>'9')
-                break;
-            *this *= ten;
-            num[i]+=str[i]-'0';
-        }
+		*this = str;
 	}
-    
+	
 	template <int X>
 	operator bignum<X> () const
 	{
@@ -70,7 +59,7 @@ public:
 		for (int i=0; i<S; ++i)
 		{
 			v=num[i]+rhs.num[i]+carry;
-			carry=((int)num[i]+(int)rhs.num[i])>>16; // 16 bits
+			carry=v>>16; // 16 bits
 			ret.num[i]=v;
 		}
 		return ret; 
@@ -85,7 +74,7 @@ public:
 		{
 			v=num[i]-rhs.num[i]-carry;
 			carry=0;
-			if (rhs.num[i]>num[i])
+			if (v<0)
 				carry=1;
 			ret.num[i]=v;
 		}
@@ -193,6 +182,28 @@ public:
 		}
 
 		return cur; 
+	}
+
+	bignum divideSigned (const bignum &rhs) const
+	{
+		bool sign;
+		bignum left = *this;
+		if (left.num[S-1]&0x8000)
+		{
+			sign^=true;
+			left=~left +1;
+		}
+		bignum right = rhs;
+		if (right.num[S-1]&0x8000)
+		{
+			sign^=true;
+			right=~right + 1;
+		}
+		bignum result = left/right;
+
+		if (sign)
+			result=~result + 1;
+		return result;
 	}
 
 	bignum operator << (int rhs) const
@@ -388,7 +399,7 @@ public:
 
 		if (cur.num[S-1]&0x8000) {
 			ret +='-';
-			cur=~cur;
+			cur=~cur+1;
 		}
 
 		do
@@ -414,7 +425,35 @@ public:
 		return ret;
 	}
 
-	bignum operator ~()
+	bignum operator = (const char *str)
+	{
+		int i;
+		for (i=0; i<S; ++i)
+		{
+			num[i]=0;
+		}
+		bignum ten(10);
+		i=0;
+		bool sign=false;
+		if (str[i]=='-')
+			sign=true, ++i;
+		for (; str[i]; ++i)
+		{
+			
+			if (str[i]<'0' || str[i]>'9')
+				break;
+			*this *= ten;
+			*this+=(int)(str[i]-'0');
+		}
+		if (sign)
+		{
+			*this = ~*this+1;
+		}
+
+		return *this;
+	}
+
+	bignum operator ~() const
 	{
 		bignum ret;
 		for (int i=0; i<S; ++i)
@@ -457,6 +496,14 @@ public:
 	bignum &operator >>= (int rhs) 
 	{
 		return *this = *this >> rhs;
+	}
+
+	/* Status functions */
+	bool isZero()
+	{
+		for (int i=0; i<S; ++i)
+			if (num[i]) return false;
+		return true;
 	}
 };
 
