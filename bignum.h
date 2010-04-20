@@ -122,12 +122,6 @@ public:
 		bignum ret;
 		bignum cur(*this);
 
-		if (div<cur)
-		{
-			cur-=div; 
-			ret.num[0]|=1;
-		}
-	
 		while (--p>=0)
 		{
 			ret <<=1;
@@ -163,12 +157,6 @@ public:
 
 		bignum ret;
 		bignum cur(*this);
-
-		if (div<cur)
-		{
-			cur-=div; 
-			ret.num[0]|=1;
-		}
 	
 		while (--p>=0)
 		{
@@ -273,6 +261,62 @@ public:
 		}
 
 		return ret; 
+	}
+
+	bignum & operator ++()
+	{
+		for (int i=0; i<S; ++i)
+			if (++num[i]!=0)
+				break;
+		return *this;
+	}
+	bignum & operator --()
+	{
+		for (int i=0; i<S; ++i)
+			if (num[i]--!=0)
+				break;
+		return *this;
+	}
+
+	/* Functions */
+	bignum pow (bignum exp)
+	{
+		bignum base = *this;
+		bignum ret = 1;
+
+		while (!exp.isZero())
+		{
+			if (exp.num[0]&1)
+			{
+				ret *= base;
+			}
+			base *= base; 
+			exp >>= 1;
+		}
+
+		return ret;
+	}
+
+	bignum expmod (bignum exp, const bignum &mod)
+	{
+		bignum base = *this % mod;
+		bignum ret;
+
+		exp %= mod;
+
+		while (!exp.isZero())
+		{
+			if (exp.num[0]&1)
+			{
+				ret = ret * base % mod;
+			}
+			base = base * base % mod; 
+			exp >>= 1;
+		}
+
+		ret %= mod;
+		return ret;
+
 	}
 
 	/* Comparison operators */
@@ -425,6 +469,24 @@ public:
 		return ret;
 	}
 
+	std::string toStringHex(char sep='\0')
+	{
+		std::string ret;
+		
+		for (int i=S-1; i>=0; --i)
+		{
+			for (int j=12; j>=0; j-=4)
+			{
+				int val = (num[i]>>j)&0xf;
+				if (val<10) ret+='0'+val;
+				else 
+					ret+='A'-10+val;
+			}
+			if (sep && i) ret+=sep;
+		}
+		return ret;
+	}
+
 	bignum operator = (const char *str)
 	{
 		int i;
@@ -504,6 +566,11 @@ public:
 		for (int i=0; i<S; ++i)
 			if (num[i]) return false;
 		return true;
+	}
+
+	bool bit(int i)
+	{
+		return (num[i/16]>>(i%16))&1;
 	}
 };
 

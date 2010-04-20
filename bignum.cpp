@@ -16,6 +16,9 @@ struct testinfo {
 	{"2", '*', "3", "6", false},
 	{"8", '/', "4", "2", false},
 	{"-8", '/', "4", "-2", true},
+	{"3", '^', "40", "12157665459056928801", false},
+	{"-3", '^', "7", "-2187", true},
+	{"3", '^', "90", "61138932561776519302173459304484406505", false}, // This isn't "correct", but tests overflow. 
 
 	{"4294967295",'+',"1","4294967296", false},
 	{"4295032833", '-', "131074", "4294901759", false},
@@ -55,6 +58,9 @@ int runtests()
 			{
 				z=x/y;
 			}
+			break;
+		case '^':
+			z = x.pow(y);
 			break;
 		}
 		std::string result;
@@ -135,6 +141,9 @@ int main (int argc, char **argv)
 		{
 			z=x/y;
 		}
+		break;
+	case '^':
+		z = x.pow(y);
 		break;
 	}
 
